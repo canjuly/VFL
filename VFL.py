@@ -140,14 +140,15 @@ def cal_final_rank(VFL_rank, SFL_rank, variable_info):
 def get_py_VFL_rank(file_path, test_dir_path):
 
     variable_name_list = Parse_ast.get_py_variable_name_list(file_path)
-    # print(variable_name_list)
+    print(variable_name_list)
     variable_info = collect_variable_info(variable_name_list, file_path)
-    # print(variable_info)
+    print(variable_info)
     passed_test_num, failed_test_num, lines_passed,  lines_failed = Coverage.get_python_cov_info(file_path, test_dir_path)
-    # print(lines_passed,  lines_failed)
+    print(lines_passed,  lines_failed)
     N_tuple = cal_N_tuple(passed_test_num, failed_test_num, lines_passed,  lines_failed)
-    # print(N_tuple)
+    print(N_tuple)
     SFL_rank = get_SFL_rank(N_tuple)
+    print(SFL_rank)
     VFL_rank = cal_VFL_rank(N_tuple, variable_info)
     final_VFL_rank = cal_final_rank(VFL_rank, SFL_rank, variable_info)
     print(final_VFL_rank)
@@ -169,12 +170,12 @@ def get_cpp_VFL_rank(file_path, test_dir_path):
 
 if __name__ == "__main__":
     
-    # file_path = r'..\TCG\data\3899\WA_py\498232.py'
-    # test_dir_path = r'..\TCG\data\3899\TEST_DATA'
-    # get_py_VFL_rank(file_path, test_dir_path)
+    file_path = r'..\TCG\data\3920\WA_py\502141.py'
+    test_dir_path = r'..\TCG\data\3920\TEST_DATA'
+    get_py_VFL_rank(file_path, test_dir_path)
 
-    file_path = r'..\oj数据集\data_cpp\1933\WA\2134.cpp'
-    test_dir_path = r'..\oj数据集\data_cpp\1933\TEST_DATA'
-    get_cpp_VFL_rank(file_path, test_dir_path)
+    # file_path = r'..\oj数据集\data_cpp\1933\WA\2134.cpp'
+    # test_dir_path = r'..\oj数据集\data_cpp\1933\TEST_DATA'
+    # get_cpp_VFL_rank(file_path, test_dir_path)
     
     

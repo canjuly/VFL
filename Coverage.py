@@ -65,11 +65,15 @@ def get_python_cover_line(src_file_path, input_file):
         items = items[4:len(items)]
         for item in items:
             item = item.replace(',', '').replace('\n', '')
-            pre_line = int(item.split('-')[0])
-            end_line = int(item.split('-')[1])
-            for i in range(pre_line, end_line + 1):
-                missing_lines.append(i)
-                cover_lines.remove(i)
+            if item.find('-') == -1:
+                missing_lines.append(int(item))
+                cover_lines.remove(int(item))
+            else:
+                pre_line = int(item.split('-')[0])
+                end_line = int(item.split('-')[1])
+                for i in range(pre_line, end_line + 1):
+                    missing_lines.append(i)
+                    cover_lines.remove(i)
     return cover_lines, missing_lines
 
 def get_python_cov_info(src_file_path, test_dir_path):
