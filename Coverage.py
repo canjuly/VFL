@@ -4,29 +4,29 @@ import shutil
 
 ##############################################
 # 若是在win平台下实验，我强烈不建议修改这个路径  #
-coverage_file_name='log\\coverage.log'       #
-temp_cpp_src_file = 'log\\temp.cpp'          #
-temp_output_file = 'log\\temp.out'           #
-temp_compile_file = 'log\\temp'              #
+coverage_file_name = '%scoverage.log'        #
+temp_cpp_src_file = '%stemp.cpp'             #
+temp_output_file = '%stemp.out'              #
+temp_compile_file = '%stemp'                 #
                                              #
 ##############################################
 
 if sys.platform == "linux":
-    COMLINE_PY_COV = "timeout 5 coverage run %s<%s"
+    COMLINE_PY_COV = "timeout 5 coverage run %s < %s > %s"
     COMLINE_PY_RUN = "timeout 5 python3 %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
     COMLINE_CPP_RUN = "./%s <%s >%s"
     COMLINE_CPP_COV = "gcov %s"
 else:
-    COMLINE_PY_COV = "coverage run %s<%s"
+    COMLINE_PY_COV = "coverage run %s<%s > %s"
     COMLINE_PY_RUN = "python %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
-    COMLINE_CPP_RUN = "%s <%s >%s"
+    COMLINE_CPP_RUN = "%s<%s>%s"
     COMLINE_CPP_COV = "gcov %s"
 
-def is_correct(temp_output_file, output_file):
+def is_correct(now_output_file, output_file):
 
-    with open(temp_output_file, 'r') as f:
+    with open(now_output_file, 'r') as f:
         temp_output_str = f.read()
     with open(output_file, 'r') as f:
         output_str = f.read()
@@ -47,18 +47,18 @@ def get_same(variable_cov_list, cover_lines):
     return ans
 
 
-def get_python_cover_line(src_file_path, input_file):
+def get_python_cover_line(src_file_path, input_file, file_short_path):
 
-    cmd = COMLINE_PY_COV % (src_file_path, input_file)
+    cmd = COMLINE_PY_COV % (src_file_path, input_file, temp_output_file % (file_short_path))
     os.system(cmd)
-    os.system('coverage report -m > ' + coverage_file_name)
+    os.system('coverage report -m > ' + coverage_file_name % (file_short_path))
     with open(src_file_path, 'r') as f:
         line_num = len(f.readlines())
     cover_lines = []
     missing_lines = []
     for i in range(line_num):
         cover_lines.append(i + 1)
-    with open(coverage_file_name, 'r') as f:
+    with open(coverage_file_name % (file_short_path), 'r') as f:
         text = f.readlines()[2] 
         items = text.split(' ')
         items = list(filter(lambda str: str != '' , items))
@@ -90,7 +90,9 @@ def get_python_cov_info(src_file_path, test_dir_path):
         for i in range(line_num + 1):
             lines_failed.append(0)
             lines_passed.append(0)
-
+    file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
+    # print(file_short_path)
+    # return
     test_files = os.listdir(test_dir_path)
     for i in test_files:
         if ".in" not in i:
@@ -98,14 +100,14 @@ def get_python_cov_info(src_file_path, test_dir_path):
         input_file = os.path.join(test_dir_path, i)
         output_file = os.path.join(test_dir_path, i[: -2] + "out")
 
-        cmd = COMLINE_PY_RUN % (src_file_path, input_file, temp_output_file)
-        try:
-            os.system(cmd)
-        except:
-            print('crashed')
-            continue
-        cover_lines, missing_lines = get_python_cover_line(src_file_path, input_file)
-        res = is_correct(temp_output_file, output_file)
+        # cmd = COMLINE_PY_RUN % (src_file_path, input_file, temp_output_file % (file_short_path))
+        # try:
+        #     os.system(cmd)
+        # except:
+        #     print('crashed')
+        #     continue
+        cover_lines, missing_lines = get_python_cover_line(src_file_path, input_file, file_short_path)
+        res = is_correct(temp_output_file  % (file_short_path), output_file)
         if res == True:
             passed_test_num += 1
         else:
@@ -120,6 +122,7 @@ def get_python_cov_info(src_file_path, test_dir_path):
 def get_cpp_cover_line(src_file_path, input_file):
 
     cmd = COMLINE_CPP_COV % (src_file_path)
+    print(cmd)
     os.system(cmd)
     cover_lines = []
     missing_lines = []
@@ -134,26 +137,31 @@ def get_cpp_cover_line(src_file_path, input_file):
             missing_lines.append(int(items[1]))
         else:
             cover_lines.append(int(items[1]))
-    # print(cover_lines, missing_lines)
+    
     return cover_lines, missing_lines
 
 def get_cpp_cov_info(src_file_path, test_dir_path):
 
     if not os.path.exists('log\\'):
         os.makedirs('log')
-    shutil.copy(src_file_path, temp_cpp_src_file)
+
+    file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
+    shutil.copy(src_file_path, temp_cpp_src_file % (file_short_path))
 
     failed_test_num = 0
     passed_test_num = 0
     lines_failed = []
     lines_passed = []
-    with open(temp_cpp_src_file, 'r') as f:
+    with open(temp_cpp_src_file % (file_short_path), 'r') as f:
         line_num = len(f.readlines())
         for i in range(line_num + 1):
             lines_failed.append(0)
             lines_passed.append(0)
 
     test_files = os.listdir(test_dir_path)
+    cmd1 = COMLINE_CPP_COM % (temp_cpp_src_file % (file_short_path), temp_compile_file % (file_short_path))
+    os.system(cmd1)
+    shutil.move('temp.gcno',file_short_path + 'temp.gcno')
     for i in test_files:
         if ".in" not in i:
             continue
@@ -161,17 +169,16 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
         output_file = os.path.join(test_dir_path, i[: -2] + "out")
 
         try:
-            cmd1 = COMLINE_CPP_COM % (temp_cpp_src_file, temp_compile_file)
-            cmd2 = COMLINE_CPP_RUN % (temp_compile_file, input_file, temp_output_file)
-            os.system(cmd1)
+            cmd2 = COMLINE_CPP_RUN % (temp_compile_file % (file_short_path), input_file, temp_output_file % (file_short_path))
+            print(cmd2)
             os.system(cmd2)
-            shutil.move('temp.gcda','log\\temp.gcda')
-            shutil.move('temp.gcno','log\\temp.gcno')
+            shutil.move('temp.gcda',file_short_path + 'temp.gcda')
         except:
             print('crashed')
             continue
-        cover_lines, missing_lines = get_cpp_cover_line(temp_cpp_src_file, input_file)
-        res = is_correct(temp_output_file, output_file)
+        cover_lines, missing_lines = get_cpp_cover_line(temp_cpp_src_file % (file_short_path), input_file)
+        # print(cover_lines, missing_lines)
+        res = is_correct(temp_output_file % (file_short_path), output_file)
         if res == True:
             passed_test_num += 1
         else:
@@ -181,6 +188,7 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
                 lines_passed[i] += 1
             else:
                 lines_failed[i] += 1
+        # break
     return passed_test_num, failed_test_num, lines_passed, lines_failed
 
 if __name__ == "__main__":

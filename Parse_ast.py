@@ -3,7 +3,7 @@ import pycparser
 import os
 import shutil
 
-temp_cpp_src_file = 'log\\temp.cpp'
+temp_cpp_src_file = '%stemp.cpp'
 
 
 class CodeVisitor(ast.NodeVisitor):
@@ -18,6 +18,8 @@ class CodeVisitor(ast.NodeVisitor):
         这里有个问题，万一这个Name是函数调用里的Name怎么办？
         """
         # print(node.id)
+        if node.id == '__name__':
+            return
         try:
             self.variable_list.index(node.id)
         except:
@@ -42,8 +44,10 @@ def get_cpp_variable_name_list(file_path):
 
     if not os.path.exists('log\\'):
         os.makedirs('log')
-    shutil.copy(file_path, temp_cpp_src_file)
-    with open(temp_cpp_src_file, 'r+') as f:
+    
+    file_short_path = 'log\\' + file_path.split('\\')[-1] + '\\'
+    shutil.copy(file_path, temp_cpp_src_file % (file_short_path))
+    with open(temp_cpp_src_file % (file_short_path), 'r+') as f:
         lines = f.readlines()
         for i in range(len(lines)):
             line = lines[i]
@@ -52,12 +56,13 @@ def get_cpp_variable_name_list(file_path):
         f.seek(0)
         f.truncate()
         f.writelines(lines)
-
+   
     variable_list = []
-    ast = pycparser.parse_file(temp_cpp_src_file, use_cpp=True)
+    ast = pycparser.parse_file(temp_cpp_src_file % (file_short_path), use_cpp=True)
     flag = False
-    with open('log\\ast.log', 'r+') as f:
+    with open(file_short_path + 'ast.log', 'w+') as f:
         ast.show(buf = f)
+        f.seek(0)
         lines = f.readlines()
     for i in range(len(lines)):
         if flag == True:
