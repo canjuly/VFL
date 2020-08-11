@@ -228,9 +228,9 @@ def get_all_VFL_rank(file_dir_path, test_dir_path):
 
 if __name__ == "__main__":
     
-    # file_path = r'..\TCG\data\3920\WA_py\502141.py'
-    # test_dir_path = r'..\TCG\data\3920\TEST_DATA'
-    # get_py_VFL_rank(file_path, test_dir_path)
+    file_path = r'..\TCG\data\3920\WA_py\502141.py'
+    test_dir_path = r'..\TCG\data\3920\TEST_DATA'
+    get_py_VFL_rank(file_path, test_dir_path)
 
     # file_path = r'..\data\3310\WA_cpp\287675.cpp'
     # test_dir_path = r'..\data\3310\TEST_DATA_TCG1'
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     # test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
     # get_c_VFL_rank(file_path, test_dir_path)
 
-    file_dir_path = r'..\data\2174\WA_cpp'
-    test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
-    get_all_VFL_rank(file_dir_path, test_dir_path)
+    # file_dir_path = r'..\data\2174\WA_cpp'
+    # test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
+    # get_all_VFL_rank(file_dir_path, test_dir_path)
     

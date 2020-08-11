@@ -4,10 +4,11 @@ import shutil
 
 ##############################################
 # 若是在win平台下实验，我强烈不建议修改这个路径  #
-coverage_file_name = '%scoverage.log'        #
-temp_cpp_src_file = '%stemp.cpp'             #
-temp_output_file = '%stemp.out'              #
-temp_compile_file = '%stemp'                 #
+coverage_file_name = 'coverage.log'          #
+temp_cpp_src_file = 'temp.cpp'               #
+temp_py_src_file = 'temp.py'                 #
+temp_output_file = 'temp.out'                #
+temp_compile_file = 'temp'                   #
                                              #
 ##############################################
 
@@ -16,13 +17,13 @@ if sys.platform == "linux":
     COMLINE_PY_RUN = "timeout 5 python3 %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
     COMLINE_CPP_RUN = "./%s <%s >%s"
-    COMLINE_CPP_COV = "gcov %s"
+    COMLINE_CPP_COV = "timeout 5 gcov %s"
 else:
     COMLINE_PY_COV = "coverage run %s<%s > %s"
     COMLINE_PY_RUN = "python %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
     COMLINE_CPP_RUN = "%s<%s>%s"
-    COMLINE_CPP_COV = "gcov %s"
+    COMLINE_CPP_COV = "timeout 5 gcov %s"
 
 def is_correct(now_output_file, output_file):
 
@@ -47,18 +48,18 @@ def get_same(variable_cov_list, cover_lines):
     return ans
 
 
-def get_python_cover_line(src_file_path, input_file, file_short_path):
+def get_python_cover_line(src_file_path, input_file):
 
-    cmd = COMLINE_PY_COV % (src_file_path, input_file, temp_output_file % (file_short_path))
+    cmd = COMLINE_PY_COV % (src_file_path, input_file, temp_output_file)
     os.system(cmd)
-    os.system('coverage report -m > ' + coverage_file_name % (file_short_path))
+    os.system('coverage report -m > ' + coverage_file_name)
     with open(src_file_path, 'r') as f:
         line_num = len(f.readlines())
     cover_lines = []
     missing_lines = []
     for i in range(line_num):
         cover_lines.append(i + 1)
-    with open(coverage_file_name % (file_short_path), 'r') as f:
+    with open(coverage_file_name, 'r') as f:
         text = f.readlines()[2] 
         items = text.split(' ')
         items = list(filter(lambda str: str != '' , items))
@@ -91,6 +92,9 @@ def get_python_cov_info(src_file_path, test_dir_path):
             lines_failed.append(0)
             lines_passed.append(0)
     file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
+    shutil.copy(src_file_path, file_short_path + temp_py_src_file)
+    os.chdir(file_short_path)
+    test_dir_path = '..\\..\\' + test_dir_path
     # print(file_short_path)
     # return
     test_files = os.listdir(test_dir_path)
@@ -106,8 +110,8 @@ def get_python_cov_info(src_file_path, test_dir_path):
         # except:
         #     print('crashed')
         #     continue
-        cover_lines, missing_lines = get_python_cover_line(src_file_path, input_file, file_short_path)
-        res = is_correct(temp_output_file  % (file_short_path), output_file)
+        cover_lines, missing_lines = get_python_cover_line(temp_py_src_file, input_file)
+        res = is_correct(temp_output_file, output_file)
         if res == True:
             passed_test_num += 1
         else:
@@ -117,12 +121,13 @@ def get_python_cov_info(src_file_path, test_dir_path):
                 lines_passed[i] += 1
             else:
                 lines_failed[i] += 1
+
+    os.chdir('..\\..')
     return passed_test_num, failed_test_num, lines_passed, lines_failed
 
 def get_cpp_cover_line(src_file_path, input_file):
 
     cmd = COMLINE_CPP_COV % (src_file_path)
-    print(cmd)
     os.system(cmd)
     cover_lines = []
     missing_lines = []
@@ -146,22 +151,22 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
         os.makedirs('log')
 
     file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
-    shutil.copy(src_file_path, temp_cpp_src_file % (file_short_path))
-
+    shutil.copy(src_file_path, file_short_path + temp_cpp_src_file)
+    os.chdir(file_short_path)
+    test_dir_path = '..\\..\\' + test_dir_path
     failed_test_num = 0
     passed_test_num = 0
     lines_failed = []
     lines_passed = []
-    with open(temp_cpp_src_file % (file_short_path), 'r') as f:
+    with open(temp_cpp_src_file, 'r') as f:
         line_num = len(f.readlines())
         for i in range(line_num + 1):
             lines_failed.append(0)
             lines_passed.append(0)
 
     test_files = os.listdir(test_dir_path)
-    cmd1 = COMLINE_CPP_COM % (temp_cpp_src_file % (file_short_path), temp_compile_file % (file_short_path))
+    cmd1 = COMLINE_CPP_COM % (temp_cpp_src_file, temp_compile_file)
     os.system(cmd1)
-    shutil.move('temp.gcno',file_short_path + 'temp.gcno')
     for i in test_files:
         if ".in" not in i:
             continue
@@ -169,16 +174,14 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
         output_file = os.path.join(test_dir_path, i[: -2] + "out")
 
         try:
-            cmd2 = COMLINE_CPP_RUN % (temp_compile_file % (file_short_path), input_file, temp_output_file % (file_short_path))
-            print(cmd2)
+            cmd2 = COMLINE_CPP_RUN % (temp_compile_file, input_file, temp_output_file)
             os.system(cmd2)
-            shutil.move('temp.gcda',file_short_path + 'temp.gcda')
         except:
             print('crashed')
             continue
-        cover_lines, missing_lines = get_cpp_cover_line(temp_cpp_src_file % (file_short_path), input_file)
+        cover_lines, missing_lines = get_cpp_cover_line(temp_cpp_src_file, input_file)
         # print(cover_lines, missing_lines)
-        res = is_correct(temp_output_file % (file_short_path), output_file)
+        res = is_correct(temp_output_file, output_file)
         if res == True:
             passed_test_num += 1
         else:
@@ -188,7 +191,8 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
                 lines_passed[i] += 1
             else:
                 lines_failed[i] += 1
-        # break
+    
+    os.chdir('..\\..')
     return passed_test_num, failed_test_num, lines_passed, lines_failed
 
 if __name__ == "__main__":
