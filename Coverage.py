@@ -15,6 +15,7 @@ temp_compile_file = 'temp'                   #
 if sys.platform == "linux":
     COMLINE_PY_COV = "timeout 5 coverage run %s < %s > %s"
     COMLINE_PY_RUN = "timeout 5 python3 %s <%s >%s "
+    COMLINE_PY2_RUN = "timeout 5 python2 %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
     COMLINE_CPP_RUN = "./%s <%s >%s"
     COMLINE_CPP_COV = "timeout 5 gcov %s"
@@ -23,7 +24,7 @@ else:
     COMLINE_PY_RUN = "python %s <%s >%s "
     COMLINE_CPP_COM = "g++ -fprofile-arcs -ftest-coverage %s -o %s"
     COMLINE_CPP_RUN = "%s<%s>%s"
-    COMLINE_CPP_COV = "timeout 5 gcov %s"
+    COMLINE_CPP_COV = "gcov %s"
 
 def is_correct(now_output_file, output_file):
 
@@ -79,7 +80,7 @@ def get_python_cover_line(src_file_path, input_file):
 
 def get_python_cov_info(src_file_path, test_dir_path):
 
-    if not os.path.exists('log\\'):
+    if not os.path.exists('log/'):
         os.makedirs('log')
 
     failed_test_num = 0
@@ -91,10 +92,14 @@ def get_python_cov_info(src_file_path, test_dir_path):
         for i in range(line_num + 1):
             lines_failed.append(0)
             lines_passed.append(0)
-    file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
+            
+    if sys.platform == "linux":
+        file_short_path = 'log/' + src_file_path.split('/')[-1] + '/'
+    else:
+        file_short_path = 'log/' + src_file_path.split('\\')[-1] + '/'
     shutil.copy(src_file_path, file_short_path + temp_py_src_file)
     os.chdir(file_short_path)
-    test_dir_path = '..\\..\\' + test_dir_path
+    test_dir_path = '../../' + test_dir_path
     # print(file_short_path)
     # return
     test_files = os.listdir(test_dir_path)
@@ -122,7 +127,7 @@ def get_python_cov_info(src_file_path, test_dir_path):
             else:
                 lines_failed[i] += 1
 
-    os.chdir('..\\..')
+    os.chdir('../..')
     return passed_test_num, failed_test_num, lines_passed, lines_failed
 
 def get_cpp_cover_line(src_file_path, input_file):
@@ -147,13 +152,16 @@ def get_cpp_cover_line(src_file_path, input_file):
 
 def get_cpp_cov_info(src_file_path, test_dir_path):
 
-    if not os.path.exists('log\\'):
+    if not os.path.exists('log/'):
         os.makedirs('log')
 
-    file_short_path = 'log\\' + src_file_path.split('\\')[-1] + '\\'
+    if sys.platform == "linux":
+        file_short_path = 'log/' + src_file_path.split('/')[-1] + '/'
+    else:
+        file_short_path = 'log/' + src_file_path.split('\\')[-1] + '/'
     shutil.copy(src_file_path, file_short_path + temp_cpp_src_file)
     os.chdir(file_short_path)
-    test_dir_path = '..\\..\\' + test_dir_path
+    test_dir_path = '../../' + test_dir_path
     failed_test_num = 0
     passed_test_num = 0
     lines_failed = []
@@ -192,7 +200,7 @@ def get_cpp_cov_info(src_file_path, test_dir_path):
             else:
                 lines_failed[i] += 1
     
-    os.chdir('..\\..')
+    os.chdir('../..')
     return passed_test_num, failed_test_num, lines_passed, lines_failed
 
 if __name__ == "__main__":

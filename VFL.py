@@ -4,8 +4,9 @@ import re
 import Parse_ast
 import Coverage
 import SBFL_Formular as SF
+import shutil
 
-languages = ['py', 'cpp', 'c']
+languages = ['py', 'cpp', 'c'] # 这里可以指定语言（按后缀名）
 
 
 def read_file(file_path):
@@ -60,7 +61,9 @@ def collect_variable_info(variable_name_list, file_path):
 
 
 def cal_N_tuple(passed_test_num, failed_test_num, lines_passed,  lines_failed):
-
+    '''
+    这里可以切换相似系数（我不知道我相似系数那几个公式对不对。。）
+    '''
     N_tuple = []
     line_num = len(lines_passed)  #其实比实际行数多一行，因为有个第0行
     for i in range(1, line_num):
@@ -156,7 +159,8 @@ def get_py_VFL_rank(file_path, test_dir_path):
     # print(SFL_rank)
     VFL_rank = cal_VFL_rank(N_tuple, variable_info)
     final_VFL_rank = cal_final_rank(VFL_rank, SFL_rank, variable_info)
-    print(final_VFL_rank)
+    # print(final_VFL_rank)
+    return final_VFL_rank
 
 def get_cpp_VFL_rank(file_path, test_dir_path):
     '''
@@ -173,14 +177,15 @@ def get_cpp_VFL_rank(file_path, test_dir_path):
     SFL_rank = get_SFL_rank(N_tuple)
     VFL_rank = cal_VFL_rank(N_tuple, variable_info)
     final_VFL_rank = cal_final_rank(VFL_rank, SFL_rank, variable_info)
-    print(final_VFL_rank)
+    # print(final_VFL_rank)
+    return final_VFL_rank
 
 def get_c_VFL_rank(file_path, test_dir_path):
     '''
     单个c文件的VFL排名
     '''
     variable_name_list = Parse_ast.get_cpp_variable_name_list(file_path)
-    # print(variable_name_list)
+    print(variable_name_list)
     variable_info = collect_variable_info(variable_name_list, file_path)
     # print(variable_info)
     passed_test_num, failed_test_num, lines_passed,  lines_failed = Coverage.get_cpp_cov_info(file_path, test_dir_path)
@@ -190,13 +195,16 @@ def get_c_VFL_rank(file_path, test_dir_path):
     SFL_rank = get_SFL_rank(N_tuple)
     VFL_rank = cal_VFL_rank(N_tuple, variable_info)
     final_VFL_rank = cal_final_rank(VFL_rank, SFL_rank, variable_info)
-    print(final_VFL_rank)  # 最后排名在这里
+    # print(final_VFL_rank)
+    return final_VFL_rank
 
 def get_all_VFL_rank(file_dir_path, test_dir_path):
     '''
     一个文件夹内所有文件各自的VFL排名
     '''
+    root_path = os.getcwd()
     file_list = os.listdir(file_dir_path)
+    error_list = []
     count = 0
     for i in file_list:
         file_type = i.split('.')[-1]
@@ -204,43 +212,47 @@ def get_all_VFL_rank(file_dir_path, test_dir_path):
             continue
         
         file_path = os.path.join(file_dir_path, i)
-        if not os.path.exists('log\\' + i + '\\'):
-            os.makedirs('log\\' + i)
-        
-        print(file_path)
-        # continue
+        if not os.path.exists('log/' + i + '/'):
+            os.makedirs('log/' + i)
+        final_VFL_rank = []
+        print(i)
         try:
             if file_type == 'py':
-                get_py_VFL_rank(file_path, test_dir_path)
+                final_VFL_rank = get_py_VFL_rank(file_path, test_dir_path)
             elif file_type == 'cpp':
-                get_cpp_VFL_rank(file_path, test_dir_path)
-            elif filr_type == 'c':
-                get_c_VFL_rank(file_path, test_dir_path)
+                final_VFL_rank = get_cpp_VFL_rank(file_path, test_dir_path)
+            elif file_type == 'c':
+                final_VFL_rank = get_c_VFL_rank(file_path, test_dir_path)
+            print(final_VFL_rank)
         except:
             print('some error happend, pass')
-            continue
-        else:
-            pass
-        
-        # count += 1
-        # if count > 10:
-        #     break
+            error_list.append(i)
+            os.chdir(root_path)
+        finally:
+            shutil.rmtree('log/' + i)
+            # break
+            # count+=1
+            # if count > 1:
+            #     break
+
+    print('passed program: ' , error_list)
+
 
 if __name__ == "__main__":
     
-    file_path = r'..\TCG\data\3920\WA_py\502141.py'
-    test_dir_path = r'..\TCG\data\3920\TEST_DATA'
-    get_py_VFL_rank(file_path, test_dir_path)
+    # file_path = r'..\TCG\data\3920\WA_py\502141.py'
+    # test_dir_path = r'..\TCG\data\3920\TEST_DATA'
+    # print(get_py_VFL_rank(file_path, test_dir_path))
 
     # file_path = r'..\data\3310\WA_cpp\287675.cpp'
     # test_dir_path = r'..\data\3310\TEST_DATA_TCG1'
-    # get_cpp_VFL_rank(file_path, test_dir_path)
+    # print(get_cpp_VFL_rank(file_path, test_dir_path))
     
-    # file_path = r'..\data\2174\WA_c\35505.c'
+    # file_path = r'..\data\2174\WA_c\154039.c'
     # test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
     # get_c_VFL_rank(file_path, test_dir_path)
 
-    # file_dir_path = r'..\data\2174\WA_cpp'
-    # test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
-    # get_all_VFL_rank(file_dir_path, test_dir_path)
+    file_dir_path = r'..\data\2174\WA_py'
+    test_dir_path = r'..\data\2174\TEST_DATA_TCG1'
+    get_all_VFL_rank(file_dir_path, test_dir_path)
     

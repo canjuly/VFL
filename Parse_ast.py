@@ -1,4 +1,5 @@
 import ast
+import sys
 import pycparser
 import os
 import shutil
@@ -42,10 +43,12 @@ def get_py_variable_name_list(file_path):
 
 def get_cpp_variable_name_list(file_path):
 
-    if not os.path.exists('log\\'):
+    if not os.path.exists('log/'):
         os.makedirs('log')
-    
-    file_short_path = 'log\\' + file_path.split('\\')[-1] + '\\'
+    if sys.platform == "linux":
+        file_short_path = 'log/' + file_path.split('/')[-1] + '/'
+    else:
+        file_short_path = 'log/' + file_path.split('\\')[-1] + '/'
     shutil.copy(file_path, temp_cpp_src_file % (file_short_path))
     with open(temp_cpp_src_file % (file_short_path), 'r+') as f:
         lines = f.readlines()
