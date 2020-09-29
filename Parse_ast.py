@@ -34,6 +34,7 @@ def get_py_variable_name_list(file_path):
     
     with open(file_path, 'r') as f:
         text = f.read()
+    # print(text)
     r_node = ast.parse(text)
     # print(ast.dump(r_node))
     visitor = CodeVisitor()
